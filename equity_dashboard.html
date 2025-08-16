@@ -5,11 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Equity Dashboard</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Include Chart.js for charts (if used in the dashboard) -->
+    <!-- Chart.js for Ownership Distribution chart -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Include jQuery for DOM manipulation (if used in the dashboard) -->
+    <!-- jQuery for DOM manipulation -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- Add any other scripts needed for dashboard functionality -->
 </head>
 <body>
     <div class="navbar">
@@ -18,10 +17,10 @@
         </div>
         <div class="menu">
             <a href="index.html">Dashboard</a>
-            <a href="#">Add Shareholder</a>
-            <a href="#">Add Investment</a>
-            <a href="#">Simulator</a>
-            <a href="#">Export CSV</a>
+            <a href="#add-shareholder">Add Shareholder</a>
+            <a href="#add-investment">Add Investment</a>
+            <a href="#simulator">Simulator</a>
+            <a href="#" id="export-csv">Export CSV</a>
         </div>
         <div class="hamburger">
             <div></div>
@@ -34,7 +33,6 @@
     </div>
 
     <div class="dashboard-container">
-        <!-- Your existing dashboard content -->
         <h1>Equity Dashboard</h1>
         <p>Cap table • Investments • Simulator</p>
         <div class="tip-box">
@@ -42,28 +40,36 @@
             <p>Data is stored in your browser (LocalStorage). Use Export to backup.</p>
         </div>
 
-        <!-- Current Valuation and Total Raised -->
         <div class="card">
-            <h2>Current Valuation</h2>
-            <p>₹0</p>
-            <p>Current Share Price: ₹0.00</p>
-            <h2>Total Raised</h2>
-            <p>₹0</p>
-            <p>Latest Issued Shares: 0</p>
-            <p>OK Authorized vs Issued</p>
+            <h2>Equity Dashboard</h2>
+            <p>Clean corporate view — light theme</p>
+            <button>Reset Data</button>
+            <a href="#" id="download-html">Download HTML</a>
         </div>
 
-        <!-- Ownership Distribution -->
+        <div class="card">
+            <div>
+                <h2>Current Valuation</h2>
+                <p id="current-valuation">₹0</p>
+                <p>Current Share Price: <span id="share-price">₹0.00</span></p>
+            </div>
+            <div>
+                <h2>Total Raised</h2>
+                <p id="total-raised">₹0</p>
+                <p>Latest Issued Shares: <span id="issued-shares">0</span></p>
+                <p>OK Authorized vs Issued</p>
+            </div>
+        </div>
+
         <div class="card">
             <h2>Ownership Distribution</h2>
             <h3>Current Cap Table</h3>
-            <button>Refresh Charts</button>
+            <button id="refresh-charts">Refresh Charts</button>
             <div>
                 <canvas id="ownershipChart"></canvas>
             </div>
         </div>
 
-        <!-- Cap Table -->
         <div class="card">
             <h2>Cap Table</h2>
             <table>
@@ -79,7 +85,6 @@
             </table>
         </div>
 
-        <!-- Rounds / Investment Log -->
         <div class="card">
             <h2>Rounds / Investment Log</h2>
             <table>
@@ -98,20 +103,18 @@
             </table>
         </div>
 
-        <!-- Add / Edit Shareholder -->
-        <div class="card">
+        <div class="card" id="add-shareholder">
             <h2>Add / Edit Shareholder</h2>
             <form id="shareholderForm">
-                <input type="text" placeholder="Name">
-                <input type="number" placeholder="Initial Shares">
-                <input type="number" placeholder="Initial Investment">
+                <input type="text" placeholder="Name" required>
+                <input type="number" placeholder="Initial Shares" required>
+                <input type="number" placeholder="Initial Investment" required>
                 <textarea placeholder="Notes"></textarea>
                 <button type="submit">Save Shareholder</button>
-                <button type="button">Cancel</button>
+                <button type="button" id="cancelShareholder">Cancel</button>
             </form>
         </div>
 
-        <!-- Existing Shareholders -->
         <div class="card">
             <h2>Existing Shareholders</h2>
             <table>
@@ -128,29 +131,27 @@
             </table>
         </div>
 
-        <!-- Add Investment -->
-        <div class="card">
+        <div class="card" id="add-investment">
             <h2>Add Investment</h2>
             <form id="investmentForm">
-                <input type="date" placeholder="Date">
-                <select>
-                    <option>Pre-Seed</option>
-                    <option>Seed</option>
-                    <option>Angel</option>
-                    <option>Series A</option>
-                    <option>Bridge</option>
-                    <option>SAFE</option>
+                <input type="date" placeholder="Date" required>
+                <select required>
+                    <option value="Pre-Seed">Pre-Seed</option>
+                    <option value="Seed">Seed</option>
+                    <option value="Angel">Angel</option>
+                    <option value="Series A">Series A</option>
+                    <option value="Bridge">Bridge</option>
+                    <option value="SAFE">SAFE</option>
                 </select>
-                <input type="text" placeholder="Investor">
-                <input type="number" placeholder="Amount">
-                <input type="number" placeholder="Pre-money">
+                <input type="text" placeholder="Investor" required>
+                <input type="number" placeholder="Amount" required>
+                <input type="number" placeholder="Pre-money" required>
                 <textarea placeholder="Notes"></textarea>
                 <button type="submit">Add Investment</button>
-                <button type="button">Cancel</button>
+                <button type="button" id="cancelInvestment">Cancel</button>
             </form>
         </div>
 
-        <!-- Investment Log -->
         <div class="card">
             <h2>Investment Log</h2>
             <table>
@@ -170,12 +171,11 @@
             </table>
         </div>
 
-        <!-- Future Round Simulator -->
-        <div class="card">
+        <div class="card" id="simulator">
             <h2>Future Round Simulator</h2>
             <form id="simulatorForm">
-                <input type="number" placeholder="Assume Pre-money">
-                <input type="number" placeholder="Planned New Investment">
+                <input type="number" placeholder="Assume Pre-money" required>
+                <input type="number" placeholder="Planned New Investment" required>
                 <button type="submit">Run Simulation</button>
             </form>
             <table>
@@ -196,17 +196,16 @@
         <p>Equity Dashboard • LocalStorage copy • Built for you</p>
     </footer>
 
-    <!-- JavaScript for dashboard functionality -->
     <script>
-        // Sample Chart.js code for Ownership Distribution
+        // Initialize Chart.js for Ownership Distribution
         const ctx = document.getElementById('ownershipChart').getContext('2d');
-        const ownershipChart = new Chart(ctx, {
+        let ownershipChart = new Chart(ctx, {
             type: 'pie',
             data: {
-                labels: ['Shareholder 1', 'Shareholder 2', 'Shareholder 3'],
+                labels: [],
                 datasets: [{
-                    data: [50, 30, 20],
-                    backgroundColor: ['#3498db', '#e74c3c', '#2ecc71']
+                    data: [],
+                    backgroundColor: ['#3498db', '#e74c3c', '#2ecc71', '#f1c40f', '#9b59b6']
                 }]
             },
             options: {
@@ -214,25 +213,252 @@
             }
         });
 
-        // Add your LocalStorage and form handling logic here
-        // Example: Save shareholder data to LocalStorage
+        // Load data from LocalStorage
+        function loadData() {
+            const shareholders = JSON.parse(localStorage.getItem('shareholders')) || [];
+            const investments = JSON.parse(localStorage.getItem('investments')) || [];
+            updateCapTable(shareholders);
+            updateInvestmentLog(investments);
+            updateExistingShareholders(shareholders);
+            updateInvestmentTable(investments);
+            updateChart(shareholders);
+            updateValuation(shareholders, investments);
+        }
+
+        // Update Cap Table
+        function updateCapTable(shareholders) {
+            const tbody = document.getElementById('capTableBody');
+            tbody.innerHTML = '';
+            const totalShares = shareholders.reduce((sum, s) => sum + s.shares, 0);
+            shareholders.forEach(s => {
+                const percentage = totalShares ? ((s.shares / totalShares) * 100).toFixed(2) : 0;
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${s.name}</td>
+                    <td>${s.shares}</td>
+                    <td>${percentage}%</td>
+                    <td>₹${s.investment}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Update Investment Log
+        function updateInvestmentLog(investments) {
+            const tbody = document.getElementById('investmentLogBody');
+            tbody.innerHTML = '';
+            investments.forEach(i => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${i.date}</td>
+                    <td>${i.round}</td>
+                    <td>${i.investor}</td>
+                    <td>₹${i.amount}</td>
+                    <td>₹${i.preMoney}</td>
+                    <td>₹${i.sharePrice.toFixed(2)}</td>
+                    <td>${i.newShares}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Update Existing Shareholders
+        function updateExistingShareholders(shareholders) {
+            const tbody = document.getElementById('existingShareholdersBody');
+            tbody.innerHTML = '';
+            shareholders.forEach((s, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${s.name}</td>
+                    <td>${s.shares}</td>
+                    <td>₹${s.investment}</td>
+                    <td>${s.notes}</td>
+                    <td><button onclick="deleteShareholder(${index})">Delete</button></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Update Investment Table
+        function updateInvestmentTable(investments) {
+            const tbody = document.getElementById('investmentLogTable');
+            tbody.innerHTML = '';
+            investments.forEach((i, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${i.date}</td>
+                    <td>${i.round}</td>
+                    <td>${i.investor}</td>
+                    <td>₹${i.amount}</td>
+                    <td>₹${i.preMoney}</td>
+                    <td>₹${i.sharePrice.toFixed(2)}</td>
+                    <td>${i.newShares}</td>
+                    <td><button onclick="deleteInvestment(${index})">Delete</button></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Update Chart
+        function updateChart(shareholders) {
+            const totalShares = shareholders.reduce((sum, s) => sum + s.shares, 0);
+            ownershipChart.data.labels = shareholders.map(s => s.name);
+            ownershipChart.data.datasets[0].data = shareholders.map(s => totalShares ? (s.shares / totalShares) * 100 : 0);
+            ownershipChart.update();
+        }
+
+        // Update Valuation and Metrics
+        function updateValuation(shareholders, investments) {
+            const totalRaised = investments.reduce((sum, i) => sum + i.amount, 0);
+            const totalShares = shareholders.reduce((sum, s) => sum + s.shares, 0);
+            const latestInvestment = investments[investments.length - 1];
+            const sharePrice = latestInvestment ? latestInvestment.sharePrice : 0;
+            const valuation = totalShares * sharePrice;
+
+            document.getElementById('current-valuation').textContent = `₹${valuation.toFixed(2)}`;
+            document.getElementById('share-price').textContent = `₹${sharePrice.toFixed(2)}`;
+            document.getElementById('total-raised').textContent = `₹${totalRaised.toFixed(2)}`;
+            document.getElementById('issued-shares').textContent = totalShares;
+        }
+
+        // Add Shareholder
         document.getElementById('shareholderForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            // Add logic to save to LocalStorage
-            console.log('Shareholder form submitted');
+            const name = document.querySelector('#shareholderForm input[placeholder="Name"]').value;
+            const shares = Number(document.querySelector('#shareholderForm input[placeholder="Initial Shares"]').value);
+            const investment = Number(document.querySelector('#shareholderForm input[placeholder="Initial Investment"]').value);
+            const notes = document.querySelector('#shareholderForm textarea[placeholder="Notes"]').value;
+
+            let shareholders = JSON.parse(localStorage.getItem('shareholders')) || [];
+            shareholders.push({ name, shares, investment, notes });
+            localStorage.setItem('shareholders', JSON.stringify(shareholders));
+            loadData();
+            e.target.reset();
         });
 
+        // Add Investment
         document.getElementById('investmentForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            // Add logic to save to LocalStorage
-            console.log('Investment form submitted');
+            const date = document.querySelector('#investmentForm input[placeholder="Date"]').value;
+            const round = document.querySelector('#investmentForm select').value;
+            const investor = document.querySelector('#investmentForm input[placeholder="Investor"]').value;
+            const amount = Number(document.querySelector('#investmentForm input[placeholder="Amount"]').value);
+            const preMoney = Number(document.querySelector('#investmentForm input[placeholder="Pre-money"]').value);
+            const notes = document.querySelector('#investmentForm textarea[placeholder="Notes"]').value;
+            const sharePrice = preMoney ? amount / preMoney : 0;
+            const newShares = sharePrice ? Math.floor(amount / sharePrice) : 0;
+
+            let investments = JSON.parse(localStorage.getItem('investments')) || [];
+            investments.push({ date, round, investor, amount, preMoney, sharePrice, newShares, notes });
+            localStorage.setItem('investments', JSON.stringify(investments));
+            loadData();
+            e.target.reset();
         });
 
+        // Future Round Simulator
         document.getElementById('simulatorForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            // Add logic for simulation
-            console.log('Simulator form submitted');
+            const preMoney = Number(document.querySelector('#simulatorForm input[placeholder="Assume Pre-money"]').value);
+            const newInvestment = Number(document.querySelector('#simulatorForm input[placeholder="Planned New Investment"]').value);
+            const shareholders = JSON.parse(localStorage.getItem('shareholders')) || [];
+            const totalShares = shareholders.reduce((sum, s) => sum + s.shares, 0);
+            const sharePrice = preMoney ? preMoney / totalShares : 0;
+            const newShares = sharePrice ? Math.floor(newInvestment / sharePrice) : 0;
+            const totalNewShares = totalShares + newShares;
+
+            const tbody = document.getElementById('simulatorTable');
+            tbody.innerHTML = '';
+            shareholders.forEach(s => {
+                const proFormaShares = s.shares;
+                const proFormaPercentage = totalNewShares ? ((proFormaShares / totalNewShares) * 100).toFixed(2) : 0;
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${s.name}</td>
+                    <td>${s.shares}</td>
+                    <td>${proFormaShares}</td>
+                    <td>${proFormaPercentage}%</td>
+                `;
+                tbody.appendChild(row);
+            });
+            const newInvestorRow = document.createElement('tr');
+            newInvestorRow.innerHTML = `
+                <td>New Investor</td>
+                <td>0</td>
+                <td>${newShares}</td>
+                <td>${totalNewShares ? ((newShares / totalNewShares) * 100).toFixed(2) : 0}%</td>
+            `;
+            tbody.appendChild(newInvestorRow);
         });
+
+        // Delete Shareholder
+        function deleteShareholder(index) {
+            let shareholders = JSON.parse(localStorage.getItem('shareholders')) || [];
+            shareholders.splice(index, 1);
+            localStorage.setItem('shareholders', JSON.stringify(shareholders));
+            loadData();
+        }
+
+        // Delete Investment
+        function deleteInvestment(index) {
+            let investments = JSON.parse(localStorage.getItem('investments')) || [];
+            investments.splice(index, 1);
+            localStorage.setItem('investments', JSON.stringify(investments));
+            loadData();
+        }
+
+        // Export CSV
+        document.getElementById('export-csv').addEventListener('click', function(e) {
+            e.preventDefault();
+            const shareholders = JSON.parse(localStorage.getItem('shareholders')) || [];
+            let csv = 'Name,Shares,Investment,Notes\n';
+            shareholders.forEach(s => {
+                csv += `${s.name},${s.shares},${s.investment},${s.notes}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'shareholders.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        // Download HTML
+        document.getElementById('download-html').addEventListener('click', function(e) {
+            e.preventDefault();
+            const htmlContent = document.documentElement.outerHTML;
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'equity_dashboard.html';
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        // Reset Data
+        document.querySelector('button:contains("Reset Data")').addEventListener('click', function() {
+            localStorage.removeItem('shareholders');
+            localStorage.removeItem('investments');
+            loadData();
+        });
+
+        // Cancel Buttons
+        document.getElementById('cancelShareholder').addEventListener('click', function() {
+            document.getElementById('shareholderForm').reset();
+        });
+        document.getElementById('cancelInvestment').addEventListener('click', function() {
+            document.getElementById('investmentForm').reset();
+        });
+
+        // Hamburger Menu Toggle
+        document.querySelector('.hamburger').addEventListener('click', function() {
+            const menu = document.querySelector('.navbar .menu');
+            menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
+        });
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', loadData);
     </script>
 </body>
 </html>

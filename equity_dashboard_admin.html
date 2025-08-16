@@ -1,0 +1,505 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Equity Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root{
+      --bg:#f7f9fb; --card:#ffffff; --muted:#6c757d; --accent:#0d6efd;
+    }
+    body{background:var(--bg); font-family:Inter, Roboto, Arial, sans-serif;}
+    .sidebar{width:250px; height:100vh; position:fixed; left:0; top:0; padding:1rem; background:linear-gradient(180deg,#ffffff, #f1f5f9); box-shadow:0 2px 8px rgba(15,23,42,0.06);}
+    .main{margin-left:270px; padding:1.5rem;}
+    .nav-link{color:#0f1724;}
+    .card { border: 0; border-radius: 12px; box-shadow: 0 6px 18px rgba(15,23,42,0.06); background:var(--card); }
+    .small-muted{color:var(--muted); font-size:0.9rem;}
+	.share-price{font-weight: bold; color: #000000;}
+    .table thead th { border-bottom: none; background: #f8fafc; }
+    footer{padding:1rem; text-align:center; color:var(--muted); font-size:0.9rem;}
+    .btn-accent{background:var(--accent); color:#fff; border:none;}
+    @media (max-width: 900px){ .sidebar{position:relative; width:100%; height:auto} .main{margin-left:0} }
+  </style>
+</head>
+<body>
+	  <!-- Navbar (same as index.html) -->
+  <div class="navbar">
+      <!-- logo, menu, user icon as in index.html -->
+  </div>
+    <div class="dashboard-container">
+  <div class="sidebar">
+    <h4 class="mb-1">Equity Dashboard</h4>
+    <p class="small-muted mb-4">Cap table • Investments • Simulator</p>
+    <div class="list-group">
+      <a href="#" class="list-group-item list-group-item-action active" data-view="dashboard">Dashboard</a>
+      <a href="#" class="list-group-item list-group-item-action" data-view="shareholders">Add Shareholder</a>
+      <a href="#" class="list-group-item list-group-item-action" data-view="investments">Add Investment</a>
+      <a href="#" class="list-group-item list-group-item-action" data-view="simulator">Simulator</a>
+      <a href="#" class="list-group-item list-group-item-action" data-action="export">Export CSV</a>
+      <hr>
+      <div class="small-muted">Tip</div>
+      <div class="small-muted">Data is stored in your browser (LocalStorage). Use Export to backup.</div>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h2 class="mb-0">Equity Dashboard</h2>
+        <div class="small-muted">Clean corporate view — light theme</div>
+      </div>
+      <div>
+        <button class="btn btn-outline-secondary me-2" id="resetBtn">Reset Data</button>
+        <button class="btn btn-accent" id="downloadBtn">Download HTML</button>
+      </div>
+    </div>
+
+    <!-- Views -->
+    <div id="view-dashboard" class="view">
+      <div class="row g-3">
+        <div class="col-md-4 d-flex flex-column gap-3">
+          <div class="card p-3">
+            <div class="small-muted">Current Valuation</div>
+            <h3 id="currentValuation">₹0</h3>
+            <div class="small-muted">Current Share Price: </div>
+			<h4 id="currentSharePrice">₹0.00</h4>
+          </div>
+          <div class="card p-3">
+            <div class="small-muted">Total Raised</div>
+            <h3 id="totalRaised">₹0</h3>
+            <div class="small-muted">Latest Issued Shares</div>
+            <h5 id="latestShares">0</h5>
+            <div class="mt-2"><span class="badge bg-success" id="authorizedStatus">OK</span> <span class="small-muted">Authorized vs Issued</span></div>
+          </div>
+        </div>
+        <div class="col-md-8">
+          <div class="card p-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div><div class="small-muted">Ownership Distribution</div><h6 class="mb-0">Current Cap Table</h6></div>
+              <div><button class="btn btn-sm btn-outline-primary" id="refreshCharts">Refresh Charts</button></div>
+            </div>
+            <div class="row">
+              <div class="col-md-6">
+                <canvas id="pieChart" height="230"></canvas>
+              </div>
+              <div class="col-md-6">
+                <canvas id="lineChart" height="230"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mt-3 p-3">
+        <h5>Cap Table</h5>
+        <div class="table-responsive">
+          <table class="table table-sm" id="capTable">
+            <thead><tr><th>Shareholder</th><th class="text-end">Shares</th><th class="text-end">% Ownership</th><th class="text-end">Total Invested</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card mt-3 p-3">
+        <h5>Rounds / Investment Log</h5>
+        <div class="table-responsive" style="max-height:350px; overflow:auto;">
+          <table class="table table-sm" id="roundsTable">
+            <thead><tr><th>Date</th><th>Round</th><th>Investor</th><th class="text-end">Amount</th><th class="text-end">Pre-money</th><th class="text-end">Share Price</th><th class="text-end">New Shares</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-shareholders" class="view" style="display:none;">
+      <div class="card p-3">
+        <h5>Add / Edit Shareholder</h5>
+        <form id="shForm" class="row g-3">
+          <input type="hidden" id="shId">
+          <div class="col-md-6"><label class="form-label">Name</label><input id="shName" class="form-control" required></div>
+          <div class="col-md-3"><label class="form-label">Initial Shares</label><input id="shShares" type="number" step="1" class="form-control" value="0"></div>
+          <div class="col-md-3"><label class="form-label">Initial Investment</label><input id="shInvest" type="number" step="0.01" class="form-control" value="0"></div>
+          <div class="col-md-12"><label class="form-label">Notes</label><textarea id="shNotes" class="form-control"></textarea></div>
+          <div class="col-12"><button class="btn btn-accent" type="submit">Save Shareholder</button> <button class="btn btn-outline-secondary" id="shCancel">Cancel</button></div>
+        </form>
+      </div>
+      <div class="card mt-3 p-3">
+        <h5>Existing Shareholders</h5>
+        <div class="table-responsive">
+          <table class="table table-sm" id="shareholdersTable">
+            <thead><tr><th>Name</th><th class="text-end">Shares</th><th class="text-end">Initial Investment</th><th>Notes</th><th>Actions</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-investments" class="view" style="display:none;">
+      <div class="card p-3">
+        <h5>Add Investment</h5>
+        <form id="invForm" class="row g-3">
+          <div class="col-md-3"><label class="form-label">Date</label><input id="invDate" type="date" class="form-control" value=""></div>
+          <div class="col-md-3"><label class="form-label">Round</label><select id="invRound" class="form-select"><option>Pre-Seed</option><option>Seed</option><option>Angel</option><option>Series A</option><option>Bridge</option><option>SAFE</option></select></div>
+          <div class="col-md-3"><label class="form-label">Investor</label><select id="invInvestor" class="form-select"></select></div>
+          <div class="col-md-3"><label class="form-label">Amount</label><input id="invAmount" type="number" step="0.01" class="form-control" required></div>
+          <div class="col-md-3"><label class="form-label">Pre-money</label><input id="invPre" type="number" step="0.01" class="form-control" required></div>
+          <div class="col-md-6"><label class="form-label">Notes</label><input id="invNotes" class="form-control"></div>
+          <div class="col-12"><button class="btn btn-accent" type="submit">Add Investment</button> <button class="btn btn-outline-secondary" id="invCancel">Cancel</button></div>
+        </form>
+      </div>
+	  	<div class="card mt-3 p-3">
+  <h5>Investment Log</h5>
+	  <div class="table-responsive">
+		<table class="table table-sm" id="investmentLogTable">
+		  <thead>
+			<tr>
+			  <th>Date</th><th>Round</th><th>Investor</th>
+			  <th class="text-end">Amount</th><th class="text-end">Pre-money</th>
+			  <th class="text-end">Share Price</th><th class="text-end">New Shares</th><th>Actions</th>
+			</tr>
+		  </thead>
+		  <tbody></tbody>
+		</table>
+	  </div>
+	</div>
+    </div>
+	
+
+
+    <div id="view-simulator" class="view" style="display:none;">
+      <div class="card p-3">
+        <h5>Future Round Simulator</h5>
+        <form id="simForm" class="row g-3">
+          <div class="col-md-4"><label class="form-label">Assume Pre-money</label><input id="simPre" type="number" class="form-control" required></div>
+          <div class="col-md-4"><label class="form-label">Planned New Investment</label><input id="simAmt" type="number" class="form-control" required></div>
+          <div class="col-md-4 align-self-end"><button class="btn btn-accent" type="submit">Run Simulation</button></div>
+        </form>
+        <div class="table-responsive mt-3">
+          <table class="table table-sm" id="simTable" style="display:none;">
+            <thead><tr><th>Shareholder</th><th class="text-end">Current Shares</th><th class="text-end">Pro Forma Shares</th><th class="text-end">Pro Forma %</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <footer class="mt-4">Equity Dashboard • LocalStorage copy • Built for you</footer>
+	<footer>&copy; 2025 Company Name. All Rights Reserved.</footer>
+  </div>
+  
+
+<script>
+// ---------- Storage keys ----------
+const KEY_SH = 'eq_shareholders';
+const KEY_INV = 'eq_investments';
+const KEY_AUTH = 'eq_authorized_shares';
+
+// ---------- Utilities ----------
+function uid(){return Date.now().toString(36) + Math.random().toString(36).slice(2,7);}
+function money(x){return '₹' + Number(x||0).toLocaleString();}
+function load(key){try{return JSON.parse(localStorage.getItem(key))||[];}catch(e){return [];}}
+function save(key, v){localStorage.setItem(key, JSON.stringify(v));}
+function csvEscape(s){ if(s==null) return ''; return '"'+String(s).replace(/"/g,'""')+'"'; }
+
+// ---------- Initial sample data (only if empty) ----------
+if(!localStorage.getItem(KEY_SH) && !localStorage.getItem(KEY_INV)){
+  const sampleSH=[
+    {id:uid(), name:'You (Founder)', shares:6000, invested:0, notes:'Founder A'},
+    {id:uid(), name:'Co-founder', shares:4000, invested:0, notes:'Founder B'},
+    {id:uid(), name:'ESOP Pool', shares:0, invested:0, notes:''}
+  ];
+  save(KEY_SH, sampleSH);
+  save(KEY_INV, []);
+  localStorage.setItem(KEY_AUTH, JSON.stringify(100000));
+}
+
+// ---------- Render / State ----------
+let pieChart, lineChart;
+function computeTotals(){
+  const sh = load(KEY_SH);
+  const inv = load(KEY_INV);
+  let totalShares = sh.reduce((s,a)=>s+(Number(a.shares)||0),0);
+  // compute rounds sequentially to calculate share price and new shares
+  let rounds = [];
+  let running = totalShares;
+  inv.forEach(r=>{
+    const pre = Number(r.pre_money)||0;
+    const amt = Number(r.amount)||0;
+    const sharePrice = running? (pre / running) : 0;
+    const newShares = sharePrice? Math.round(amt / sharePrice) : 0;
+    running += newShares;
+    rounds.push({...r, sharePrice, newShares, total_after: running});
+  });
+  return {shareholders:sh, investments:rounds, totalShares: running, initialShares: totalShares};
+}
+
+function renderDashboard(){
+  const data = computeTotals();
+  const sh = data.shareholders;
+  const rounds = data.investments;
+  const latest = data.totalShares;
+  const initial = data.initialShares;
+  // totals
+  const totalRaised = sh.reduce((s,a)=>s+Number(a.invested||0),0) + rounds.reduce((s,a)=>s+Number(a.amount||0),0);
+  document.getElementById('totalRaised').innerText = money(totalRaised);
+  document.getElementById('latestShares').innerText = latest;
+  const currentValuation = rounds.length ? money(Number(rounds[rounds.length-1].pre_money) + Number(rounds[rounds.length-1].amount)) : money(sh.reduce((sum, s) => sum + Number(s.invested||0), 0));
+  document.getElementById('currentValuation').innerText = currentValuation;
+  const sharePriceVal = latest ? (Number(currentValuation.replace(/[^0-9.-]+/g,"")) / latest).toFixed(2) : 0;
+document.getElementById('currentSharePrice').innerText = money(sharePriceVal);
+  // cap table
+  const tbody = document.querySelector('#capTable tbody'); tbody.innerHTML='';
+  sh.forEach(s=>{
+    const added = rounds.filter(r=>r.investor_id===s.id).reduce((a,b)=>a+b.newShares,0);
+    const total = Number(s.shares||0) + added;
+    const pct = latest? (total/latest):0;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${s.name}</td><td class="text-end">${total.toLocaleString()}</td><td class="text-end">${(pct*100).toFixed(2)}%</td><td class="text-end">${money(Number(s.invested||0))}</td>`;
+    tbody.appendChild(tr);
+  });
+  // rounds table
+  const rbody = document.querySelector('#roundsTable tbody'); rbody.innerHTML='';
+  rounds.forEach(r=>{
+    const invName = (load(KEY_SH).find(x=>x.id===r.investor_id) || {}).name || '(external)';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${r.date}</td><td>${r.round}</td><td>${invName}</td><td class="text-end">${money(r.amount)}</td><td class="text-end">${money(r.pre_money)}</td><td class="text-end">${r.sharePrice? r.sharePrice.toFixed(2): '-'}</td><td class="text-end">${r.newShares.toLocaleString()}</td>`;
+    rbody.appendChild(tr);
+  });
+  // charts
+  drawCharts(sh, rounds);
+}
+
+function drawCharts(sh, rounds){
+  // pie chart data
+  const labels = sh.map(s=>s.name);
+  const totals = sh.map(s=>{
+    const added = rounds.filter(r=>r.investor_id===s.id).reduce((a,b)=>a+b.newShares,0);
+    return Number(s.shares||0) + added;
+  });
+  // line chart data (valuation history: post-money)
+  const dates = rounds.map(r=>r.date);
+  const post = rounds.map(r=>r.total_after? Number(r.pre_money || 0) + Number(r.amount || 0) : 0);
+  // destroy existing
+  if(pieChart) pieChart.destroy();
+  if(lineChart) lineChart.destroy();
+  const pieCtx = document.getElementById('pieChart');
+  pieChart = new Chart(pieCtx, {
+    type:'pie',
+    data: { labels: labels, datasets:[{data:totals}]},
+    options:{plugins:{legend:{position:'bottom'}}}
+  });
+  const lineCtx = document.getElementById('lineChart');
+  lineChart = new Chart(lineCtx, {
+    type:'line',
+    data:{labels:dates, datasets:[{label:'Post-money valuation', data:post, tension:0.3}]},
+    options:{scales:{y:{beginAtZero:false}}}
+  });
+}
+
+// ---------- Shareholders view ----------
+function renderShareholders(){
+  const sh = load(KEY_SH);
+  const tbody = document.querySelector('#shareholdersTable tbody'); tbody.innerHTML='';
+  const sel = document.getElementById('invInvestor'); sel.innerHTML='<option value="">-- select --</option>';
+  sh.forEach(s=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${s.name}</td><td class="text-end">${Number(s.shares).toLocaleString()}</td><td class="text-end">${money(s.invested||0)}</td><td>${s.notes||''}</td>
+      <td><button class="btn btn-sm btn-primary me-1" onclick="editSH('${s.id}')">Edit</button><button class="btn btn-sm btn-outline-danger" onclick="delSH('${s.id}')">Delete</button></td>`;
+    tbody.appendChild(tr);
+    sel.insertAdjacentHTML('beforeend', `<option value="${s.id}">${s.name}</option>`);
+  });
+}
+
+function editSH(id){
+  const sh = load(KEY_SH).find(s=>s.id===id);
+  if(!sh) return;
+  document.getElementById('shId').value = sh.id;
+  document.getElementById('shName').value = sh.name;
+  document.getElementById('shShares').value = sh.shares;
+  document.getElementById('shInvest').value = sh.invested||0;
+  document.getElementById('shNotes').value = sh.notes||'';
+  scrollToTop();
+}
+
+function delSH(id){
+  if(!confirm('Delete shareholder and their linked investments?')) return;
+  let sh = load(KEY_SH).filter(s=>s.id!==id);
+  save(KEY_SH, sh);
+  // remove investments where investor_id matches
+  let inv = load(KEY_INV).filter(i=>i.investor_id!==id);
+  save(KEY_INV, inv);
+  renderShareholders(); renderDashboard();
+}
+
+document.getElementById('shForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  const id = document.getElementById('shId').value || uid();
+  const name = document.getElementById('shName').value.trim();
+  const shares = Number(document.getElementById('shShares').value) || 0;
+  const invested = Number(document.getElementById('shInvest').value) || 0;
+  const notes = document.getElementById('shNotes').value;
+  let sh = load(KEY_SH);
+  // if exists, replace; else append
+  const existing = sh.find(s=>s.id===id);
+  if(existing){
+    existing.name = name; existing.shares = shares; existing.invested = invested; existing.notes = notes;
+  } else {
+    sh.push({id, name, shares, invested, notes});
+  }
+  save(KEY_SH, sh);
+  document.getElementById('shForm').reset();
+  document.getElementById('shId').value='';
+  renderShareholders(); renderDashboard();
+});
+
+document.getElementById('shCancel').addEventListener('click', function(e){ e.preventDefault(); document.getElementById('shForm').reset(); document.getElementById('shId').value=''; });
+
+// ---------- Investments ----------
+document.getElementById('invForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  const date = document.getElementById('invDate').value || new Date().toISOString().slice(0,10);
+  const round = document.getElementById('invRound').value;
+  const investor_id = document.getElementById('invInvestor').value || null;
+  const amount = Number(document.getElementById('invAmount').value) || 0;
+  const pre = Number(document.getElementById('invPre').value) || 0;
+  const notes = document.getElementById('invNotes').value || '';
+
+  let inv = load(KEY_INV);
+  if(this.dataset.editingId){
+    const idx = inv.findIndex(i => i.id === this.dataset.editingId);
+    if(idx > -1){
+      inv[idx] = {id: this.dataset.editingId, date, round, investor_id, amount, pre_money: pre, notes};
+    }
+    this.dataset.editingId = '';
+  } else {
+    inv.push({id: uid(), date, round, investor_id, amount, pre_money: pre, notes});
+  }
+  save(KEY_INV, inv);
+
+  document.getElementById('invForm').reset();
+  renderShareholders();
+  renderDashboard();
+  renderInvestmentLog();
+});
+
+document.getElementById('invCancel').addEventListener('click', function(e){ e.preventDefault(); document.getElementById('invForm').reset(); });
+
+function renderInvestmentLog(){
+  const rounds = computeTotals().investments;
+  const tbody = document.querySelector('#investmentLogTable tbody');
+  tbody.innerHTML = '';
+  rounds.forEach(r => {
+    const invName = (load(KEY_SH).find(x => x.id === r.investor_id) || {}).name || '(external)';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${r.date}</td><td>${r.round}</td><td>${invName}</td>
+      <td class="text-end">${money(r.amount)}</td><td class="text-end">${money(r.pre_money)}</td>
+      <td class="text-end">${r.sharePrice ? r.sharePrice.toFixed(2) : '-'}</td>
+      <td class="text-end">${r.newShares.toLocaleString()}</td>
+      <td>
+        <button class="btn btn-sm btn-primary me-1" onclick="editInvestment('${r.id}')">Edit</button>
+        <button class="btn btn-sm btn-outline-danger" onclick="deleteInvestment('${r.id}')">Delete</button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function editInvestment(id){
+  const inv = load(KEY_INV).find(i => i.id === id);
+  if(!inv) return;
+  document.getElementById('invDate').value = inv.date;
+  document.getElementById('invRound').value = inv.round;
+  document.getElementById('invInvestor').value = inv.investor_id || '';
+  document.getElementById('invAmount').value = inv.amount;
+  document.getElementById('invPre').value = inv.pre_money;
+  document.getElementById('invNotes').value = inv.notes || '';
+  document.getElementById('invForm').dataset.editingId = id;
+}
+
+function deleteInvestment(id){
+  if(!confirm('Delete this investment?')) return;
+  let inv = load(KEY_INV).filter(i => i.id !== id);
+  save(KEY_INV, inv);
+  renderInvestmentLog();
+  renderDashboard();
+}
+
+// ---------- Simulator ----------
+document.getElementById('simForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  const pre = Number(document.getElementById('simPre').value) || 0;
+  const amt = Number(document.getElementById('simAmt').value) || 0;
+  const data = computeTotals();
+  const sh = data.shareholders;
+  const current = data.totalShares;
+  if(!current || !pre){ alert('Need current shares and pre-money'); return; }
+  const price = pre / current;
+  const newShares = Math.round(amt / price);
+  const totalAfter = current + newShares;
+  const tbody = document.querySelector('#simTable tbody'); tbody.innerHTML='';
+  sh.forEach(s=>{
+    const added = data.investments.filter(r=>r.investor_id===s.id).reduce((a,b)=>a+b.newShares,0);
+    const total = Number(s.shares||0) + added;
+    const proPct = totalAfter? (total/totalAfter):0;
+    tbody.insertAdjacentHTML('beforeend', `<tr><td>${s.name}</td><td class="text-end">${total.toLocaleString()}</td><td class="text-end">${total.toLocaleString()}</td><td class="text-end">${(proPct*100).toFixed(2)}%</td></tr>`);
+  });
+  tbody.insertAdjacentHTML('beforeend', `<tr><td>New Investor</td><td class="text-end">0</td><td class="text-end">${newShares.toLocaleString()}</td><td class="text-end">${((newShares/totalAfter)*100).toFixed(2)}%</td></tr>`);
+  document.getElementById('simTable').style.display='table';
+});
+
+// ---------- Navigation ----------
+document.querySelectorAll('.list-group-item').forEach(el=>{
+  el.addEventListener('click', (e)=>{
+    const view = el.dataset.view;
+    if(view){ showView(view); document.querySelectorAll('.list-group-item').forEach(x=>x.classList.remove('active')); el.classList.add('active'); }
+    if(el.dataset.action==='export') exportCSV();
+  });
+});
+
+function showView(name){
+  document.querySelectorAll('.view').forEach(v=>v.style.display='none');
+  document.getElementById('view-'+name).style.display='block';
+  if(name==='shareholders'){ renderShareholders(); }
+  if(name==='dashboard'){ renderDashboard(); }
+  if(name==='investments'){ renderInvestmentLog(); }
+}
+
+// ---------- Export CSV ----------
+function exportCSV(){
+  const sh = load(KEY_SH);
+  const inv = load(KEY_INV);
+  let csv='Shareholders\\n';
+  csv += 'id,name,shares,invested,notes\\n';
+  sh.forEach(s=> csv += `${csvEscape(s.id)},${csvEscape(s.name)},${s.shares},${s.invested},${csvEscape(s.notes||'')}\\n`);
+  csv += '\\nInvestments\\n';
+  csv += 'id,date,round,investor_id,amount,pre_money,notes\\n';
+  inv.forEach(i=> csv += `${csvEscape(i.id)},${csvEscape(i.date)},${csvEscape(i.round)},${csvEscape(i.investor_id)},${i.amount},${i.pre_money},${csvEscape(i.notes||'')}\\n`);
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='equity_export.csv'; a.click(); URL.revokeObjectURL(url);
+}
+
+// ---------- Reset / Download HTML ----------
+document.getElementById('resetBtn').addEventListener('click', ()=>{ if(confirm('Reset all data? This removes LocalStorage data.')){ localStorage.removeItem(KEY_SH); localStorage.removeItem(KEY_INV); localStorage.removeItem(KEY_AUTH); location.reload(); }});
+document.getElementById('downloadBtn').addEventListener('click', ()=>{
+  const html = document.documentElement.outerHTML;
+  const blob = new Blob([html], {type:'text/html'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='equity_dashboard.html'; a.click(); URL.revokeObjectURL(url);
+});
+
+// ---------- Helpers ----------
+function scrollToTop(){ window.scrollTo({top:0, behavior:'smooth'}); }
+function init(){ showView('dashboard'); renderShareholders(); renderDashboard(); }
+init();
+
+// Refresh charts button
+document.getElementById('refreshCharts').addEventListener('click', ()=> renderDashboard());
+	<script src="script.js"></script>
+</script>
+</body>
+</html>
